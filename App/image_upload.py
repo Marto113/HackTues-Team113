@@ -9,8 +9,11 @@ app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 
+
 class UploadForm(FlaskForm):
-    image = FileField('Upload Image', validators=[FileRequired(), FileAllowed(app.config['ALLOWED_EXTENSIONS'], 'Images only!')])
+    image = FileField('Upload Image', validators=[FileRequired(), FileAllowed(
+        app.config['ALLOWED_EXTENSIONS'], 'Images only!')])
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -22,9 +25,11 @@ def upload_file():
         return redirect(url_for('success'))
     return render_template('upload.html', form=form)
 
+
 @app.route('/success')
 def success():
     return 'Image successfully uploaded!'
+
 
 if __name__ == '__main__':
     app.run(debug=True)
