@@ -2,44 +2,87 @@ from face_recognition.api import face_locations, face_encodings, compare_faces
 import cv2
 from pathlib import Path
 from argparse import ArgumentParser
+from time import time_ns
+import numpy as np
+from math import *
 
 def locations_and_encodings(img, jitters):
     locs = face_locations(img)
     encs = face_encodings(img, known_face_locations=locs, num_jitters=jitters, model='large')
     return zip(locs, encs)
 
-def face_detect(camera_id, whitelist, jitters, tolerance):
+def detect_edges(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blur, 50, 150)
+    return edges
+
+def categorize_face_locations(img, known_encs, jitters, tolerance):
+        bad_locs  = []
+        good_locs = []
+
+        for loc, enc in locations_and_encodings(img, jitters):
+            if any(compare_faces(known_encs, enc, tolerance)):
+                good_locs.append(loc)
+            else:
+                bad_locs.append(loc)
+
+        return bad_locs, good_locs
+
+def calculate_edge_factor(edges):
+    return np.sum(edges) / sqrt(np.shape(edges)[0]*np.shape(edges)[1])
+
+def draw_locs(img, locs, color, width):
+    for it in locs:
+        cv2.rectangle(
+            img,
+            (it[3], it[0]),
+            (it[1], it[2]),
+            color,
+            2,
+        )
+
+def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tolerance):
     cap = cv2.VideoCapture(camera_id)
 
     known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
 
+    prev_ns = time_ns()
+    risk_time = 0
+
+    alarm = False
+
     while True:
-        # Read a frame from the camera
         ret, frame = cap.read()
 
-        for loc, enc in locations_and_encodings(frame, jitters):
-            if any(compare_faces(known_encs, enc, tolerance)):
-                col = (0, 255, 0)
-            else:
-                col = (0, 0, 255)
+        edges = detect_edges(frame)
+        edge_factor = calculate_edge_factor(edges)
 
-            cv2.rectangle(
-                frame,
-                (loc[3], loc[0]),
-                (loc[1], loc[2]),
-                col,
-                2,
-            )
+        bad_locs, good_locs = categorize_face_locations(frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance)
 
-        # Display the frame in a window
+        frame_is_risky = edge_factor < min_edge_factor or len(bad_locs) > 0
+
+        if frame_is_risky: risk_time += (time_ns() - prev_ns) * 10**-9
+        else             : risk_time -= (time_ns() - prev_ns) * 10**-9
+        prev_ns = time_ns()
+
+        if risk_time > max_risk_time    : alarm = True
+        if risk_time < max_risk_time / 2: alarm = False
+
+        risk_time = min(risk_time, max_risk_time)
+        risk_time = max(risk_time, 0)
+
+        draw_locs(frame, good_locs, (0, 255, 0), 2)
+        draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
+
+        if alarm: print('🚨')
+        else    : print('😀')
+
         cv2.imshow('frame', frame)
 
-        # Wait for a key press and exit if the 'q' key is pressed
         if cv2.waitKey(1) == ord('c'):
             break
 
-
-    # Release the capture and destroy the window
     cap.release()
     cv2.destroyAllWindows()
 
@@ -50,6 +93,8 @@ if __name__ == '__main__':
     parser.add_argument('--jitters', type=int, help='Number of jitters for face', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1.0)
+    parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=3000)
 
     args = parser.parse_args()
 
@@ -58,4 +103,11 @@ if __name__ == '__main__':
     except:
         whitelist = []
 
-    face_detect(args.camera_id, whitelist, args.jitters, args.tolerance)
+    main_loop(
+        whitelist,
+        max_risk_time=args.max_risk_time,
+        jitters=args.jitters,
+        tolerance=args.tolerance,
+        camera_id=args.camera_id,
+        min_edge_factor=args.min_edge_factor
+    )
