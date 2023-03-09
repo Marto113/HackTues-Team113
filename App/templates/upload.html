@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload an Image</title>
+</head>
+<body>
+    <h1>Upload an Image</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        {{ form.image.label }} {{ form.image }}<br><br>
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>
