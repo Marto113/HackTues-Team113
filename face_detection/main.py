@@ -1,39 +1,24 @@
 from face_recognition.api import face_locations, face_encodings, compare_faces
 import cv2
 from pathlib import Path
-
 from argparse import ArgumentParser
 
-def locations_and_encodings(img, gpu=False):
-    locs = face_locations(
-        img,
-        number_of_times_to_upsample = 4 if gpu else 1,
-        model = 'cnn' if gpu else 'hog',
-    )
-    encs = face_encodings(
-        img,
-        known_face_locations=locs,
-        num_jitters = 4 if gpu else 1,
-        model = 'large',
-    )
+def locations_and_encodings(img, jitters):
+    locs = face_locations(img)
+    encs = face_encodings(img, known_face_locations=locs, num_jitters=jitters, model='large')
+    return zip(locs, encs)
 
-    return locs, encs
-
-# Open the default camera (usually 0)
-def face_detect(whitelist, gpu=False):
+def face_detect(whitelist, jitters, tolerance):
     cap = cv2.VideoCapture(0)
 
-
-    known_encs = [enc for img in whitelist for enc in locations_and_encodings(img)[1]]
+    known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
 
     while True:
         # Read a frame from the camera
         ret, frame = cap.read()
 
-        locations, encodings = locations_and_encodings(frame, gpu)
-        for loc, enc in zip(locations, encodings):
-
-            if any(compare_faces(known_encs, enc)):
+        for loc, enc in locations_and_encodings(frame, jitters):
+            if any(compare_faces(known_encs, enc, tolerance)):
                 col = (0, 255, 0)
             else:
                 col = (0, 0, 255)
@@ -61,8 +46,9 @@ def face_detect(whitelist, gpu=False):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Detect and match faces to whitelist')
-    parser.add_argument('--gpu', action='store_true', help='Use high performance settings', default=False)
     parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('whitelist/'))
+    parser.add_argument('--jitters', type=int, help='Number of jitters for face', default=1)
+    parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
 
     args = parser.parse_args()
 
@@ -71,4 +57,4 @@ if __name__ == '__main__':
     except:
         whitelist = []
 
-    face_detect(whitelist, args.gpu)
+    face_detect(whitelist, args.jitters, args.tolerance)
