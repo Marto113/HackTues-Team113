@@ -4,9 +4,9 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates')
 app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = 'whitelist'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 
 
@@ -30,6 +30,10 @@ def upload_file():
 def success():
     return 'Image successfully uploaded!'
 
+@app.route('/whitelist')
+def show_images():
+    image_names = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template('whitelist.html', image_names=image_names)
 
 if __name__ == '__main__':
     app.run(debug=True)
