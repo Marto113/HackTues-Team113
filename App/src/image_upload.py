@@ -4,7 +4,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, static_url_path="/static")
 app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}

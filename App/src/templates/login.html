@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
     <style>
         body {
-            background-color: #f8f8f8;
-            font-family: Arial, sans-serif;
+            background-image: url("../images/background.jpg");
+            background-repeat: no-repeat;
+            background-size: cover;
         }
+
         .container {
             margin: 0 auto;
             max-width: 500px;
             padding: 20px;
             background-color: #fff;
             border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
         }
+
         h1 {
             text-align: center;
         }
+
         input[type="text"],
         input[type="password"] {
             display: block;
@@ -30,11 +35,13 @@
             border-bottom: 1px solid #ccc;
             transition: border-color 0.3s;
         }
+
         input[type="text"]:focus,
         input[type="password"]:focus {
             outline: none;
             border-color: #43a2c7;
         }
+
         button[type="submit"] {
             display: block;
             margin: 20px auto 0;
@@ -47,11 +54,13 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         button[type="submit"]:hover {
             background-color: #43a2c7;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Login</h1>

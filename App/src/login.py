@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="/static")
 app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
 
 class LoginForm(FlaskForm):
