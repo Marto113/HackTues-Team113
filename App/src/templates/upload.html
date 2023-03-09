@@ -32,6 +32,12 @@
             margin-bottom: 10px;
         }
 
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
         input[type="file"] {
             border: none;
             padding: 10px;
@@ -63,7 +69,6 @@
         {{ form.csrf_token }}
         {{ form.image.label }} {{ form.image }}<br><br>
         <input type="submit" value="Upload">
-        <a href="{{ url_for('show_images') }}">View All Images</a>
     </form>
 </body>
 

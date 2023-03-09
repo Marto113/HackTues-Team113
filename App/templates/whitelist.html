@@ -1,8 +1,0 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<h1>All Images</h1>
-{% for image_name in image_names %}
-<img src="{{ url_for('static', filename='uploads/' + image_name) }}" alt="{{ image_name }}">
-{% endfor %}
-{% endblock %}
