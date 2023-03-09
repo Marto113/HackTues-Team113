@@ -21,5 +21,13 @@ class MyApp(App):
             image_file = selection[0]
             self.image_preview.source = image_file
 
+
+class ButtonApp(App):
+    def build(self):
+        return Button()
+
+    # def on_press_button(self):
+        # send images to server
+
 if __name__ == "__main__":
     MyApp().run()
