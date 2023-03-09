@@ -12,18 +12,6 @@ app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 class UploadForm(FlaskForm):
     image = FileField('Upload Image', validators=[FileRequired(), FileAllowed(app.config['ALLOWED_EXTENSIONS'], 'Images only!')])
 
-<<<<<<< Updated upstream
-
-class ButtonApp(App):
-    def build(self):
-        return Button()
-
-    # def on_press_button(self):
-        # send images to server
-
-if __name__ == "__main__":
-    MyApp().run()
-=======
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     form = UploadForm()
@@ -40,4 +28,3 @@ def success():
 
 if __name__ == '__main__':
     app.run(debug=True)
->>>>>>> Stashed changes
