@@ -1,26 +1,18 @@
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.uix.filechooser import FileChooserListView
+from flask import Flask, render_template, request, redirect, url_for
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from werkzeug.utils import secure_filename
+import os
 
-class MyApp(App):
-    def build(self):
-        layout = BoxLayout(orientation='vertical', spacing=10)
-        file_chooser = FileChooserListView()
-        file_chooser.path = "./"
-        file_chooser.filters = ["*.png", "*.jpg", "*.jpeg"]
-        file_chooser.bind(selection=self.select_image)
-        layout.add_widget(file_chooser)
-        self.image_preview = Image(allow_stretch=True, size_hint=(1, 1))
-        layout.add_widget(self.image_preview)
-        return layout
+app = Flask(__name__)
+app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 
-    def select_image(self, file_chooser, selection):
-        if selection:
-            image_file = selection[0]
-            self.image_preview.source = image_file
+class UploadForm(FlaskForm):
+    image = FileField('Upload Image', validators=[FileRequired(), FileAllowed(app.config['ALLOWED_EXTENSIONS'], 'Images only!')])
 
+<<<<<<< Updated upstream
 
 class ButtonApp(App):
     def build(self):
@@ -31,3 +23,21 @@ class ButtonApp(App):
 
 if __name__ == "__main__":
     MyApp().run()
+=======
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    form = UploadForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        image = form.image.data
+        filename = secure_filename(image.filename)
+        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('success'))
+    return render_template('upload.html', form=form)
+
+@app.route('/success')
+def success():
+    return 'Image successfully uploaded!'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+>>>>>>> Stashed changes
