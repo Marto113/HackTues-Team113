@@ -8,8 +8,8 @@ def locations_and_encodings(img, jitters):
     encs = face_encodings(img, known_face_locations=locs, num_jitters=jitters, model='large')
     return zip(locs, encs)
 
-def face_detect(whitelist, jitters, tolerance):
-    cap = cv2.VideoCapture(0)
+def face_detect(camera_id, whitelist, jitters, tolerance):
+    cap = cv2.VideoCapture(camera_id)
 
     known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
 
@@ -49,6 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('whitelist/'))
     parser.add_argument('--jitters', type=int, help='Number of jitters for face', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
+    parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
 
     args = parser.parse_args()
 
@@ -57,4 +58,4 @@ if __name__ == '__main__':
     except:
         whitelist = []
 
-    face_detect(whitelist, args.jitters, args.tolerance)
+    face_detect(args.camera_id, whitelist, args.jitters, args.tolerance)
