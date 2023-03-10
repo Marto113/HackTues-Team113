@@ -10,7 +10,7 @@ from dotenv import dotenv_values
 
 app = Flask(__name__, static_url_path="/static")
 config = dotenv_values("../.env")
-app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
+app.config['SECRET_KEY'] = config['secret_key']
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 login_manager = LoginManager(app)
@@ -69,12 +69,7 @@ def home():
         image = form.image.data
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    return render_template('upload.html', form=form)
-
-
-@app.route('/success')
-def success():
-    return 'Image successfully uploaded!'
+    return render_template('server.html', form=form)
 
 @app.route('/favicon.ico')
 def favicon():

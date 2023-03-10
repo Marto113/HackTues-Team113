@@ -3,7 +3,7 @@
 
 <head>
     <title>Upload an Image</title>
-    <link rel="stylesheet" href="../static/css/upload.css">
+    <link rel="stylesheet" href="../static/css/server.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
 </head>
 
@@ -16,6 +16,7 @@
             {{ form.image(class_='upload_field') }}<br>
             <div class="error">Please input an image.</div>
             <button type="button" class="upload">Upload</button>
+            <a href="/logout" class="logout">Log Out</a>
         </form>
     </div>
 
@@ -46,5 +47,4 @@
         });
     </script>
 </body>
-
 </html>

@@ -53,13 +53,24 @@ input[type="file"] {
 }
 
 button.upload {
-    display: block;
-    margin: 0 auto;
-    border: none;
-    background-color: rgb(114, 194, 221);
-    color: #fff;
-    padding: 10px 20px;
+    
+    float: middle;
+    background-color: rgb(128, 229, 107);
+    color: white;
+    padding: 10px;
     border-radius: 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.logout {
+    float: right;
+    background-color: #ff6961;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
     cursor: pointer;
 }
 
@@ -73,7 +84,7 @@ input[type="submit"]:hover {
 }
 
 body{
-    width: 250%;
+    width: 150%;
     max-width: 250px;
     margin-top: 350px;
     margin-left: 915px;
