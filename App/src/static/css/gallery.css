@@ -23,3 +23,25 @@ body {
     left: 50%;
     transform: translate(-102%, -50%);
 }
+
+#delete-button {
+    float: right;
+    background-color: #ff6961;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
+
+#close-button {
+    float: right;
+    background-color: orange;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
