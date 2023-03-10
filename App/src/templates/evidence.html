@@ -2,21 +2,21 @@
 <html>
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="static/css/style.css">
-  <script type="text/javascript" src="static/script/gallery.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="static/css/evidence.css">
+    <script type="text/javascript" src="static/script/gallery.js"></script>
 </head>
 
 <body>
-  <h1>Evidence Image Gallery</h1>
-  <div class="overlay"><img src="blah" id="top" hidden=True>
-    <span id="close" hidden=True onclick=do_close()><b><u>CLOSE(X)</u></b></span>
-  </div>
-  <div class="cx" style="background-color:#fff;">
-    {% for path in paths %}
-    <img src='cdn/{{ path }}' height=200 width=200 onclick="clicked_img(this)">
-    {% endfor %}
-  </div>
+    <h1>Evidence Image Gallery</h1>
+    <div class="overlay"><img src="blah" id="top" hidden=True>
+        <span id="close" hidden=True onclick=do_close()><b><u>CLOSE(X)</u></b></span>
+    </div>
+    <div class="cx" style="background-color:#fff;">
+        {% for path in paths %}
+        <img src='cdn/{{ path }}' height=200 width=200 onclick="clicked_img(this)">
+        {% endfor %}
+    </div>
 </body>
 
 </html>
