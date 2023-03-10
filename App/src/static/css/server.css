@@ -9,6 +9,7 @@
     bottom: 0;
     z-index: -1;
 }
+
 /* Body styles */
 body {
     font-family: Arial, sans-serif;
@@ -82,4 +83,3 @@ input[type="submit"]:hover {
     display: block;
     margin: 0 auto;
 }
-

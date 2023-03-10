@@ -7,14 +7,23 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
 from dotenv import dotenv_values
+import binascii
 
 app = Flask(__name__, static_url_path="/static")
 config = dotenv_values("../.env")
 app.config['SECRET_KEY'] = config['secret_key']
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['EVIDENCE_FOLDER'] = '../evidence'
-app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
+app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png'}
 login_manager = LoginManager(app)
+
+
+def encode(x):
+    return binascii.hexlify(x.encode('utf-8')).decode()
+
+
+def decode(x):
+    return binascii.unhexlify(x.encode('utf-8')).decode()
 
 
 class User(UserMixin):
@@ -47,6 +56,7 @@ def login():
 
     return render_template('login.html', form=form)
 
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -78,13 +88,26 @@ def home():
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
-                          'favicon.ico',mimetype='image/vnd.microsoft.icon')
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+@app.route('/cdn/<path:filepath>')
+@login_required
+def download_file(filepath):
+    dir, filename = os.path.split(decode(filepath))
+    return send_from_directory(dir, filename, as_attachment=False)
+
 
 @app.route('/whitelist')
 @login_required
 def whitelist():
-    file_list = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('whitelist.html', files=file_list)
+    img_dir = app.config['UPLOAD_FOLDER']
+    image_paths = []
+    for root, dirs, files in os.walk(img_dir):
+        for file in files:
+            if any(file.endswith(ext) for ext in app.config['ALLOWED_EXTENSIONS']):
+                image_paths.append(encode(os.path.join(root, file)))
+    return render_template('whitelist.html', paths=image_paths)
 
 
 @app.route('/whitelist/<filename>')
@@ -99,11 +122,17 @@ def whitelist_delete_file(filename):
     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return redirect(url_for('home'))
 
+
 @app.route('/evidence')
 @login_required
 def evidence():
-    file_list = os.listdir(app.config['EVIDENCE_FOLDER'])
-    return render_template('whitelist.html', files=file_list)
+    img_dir = app.config['EVIDENCE_FOLDER']
+    image_paths = []
+    for root, dirs, files in os.walk(img_dir):
+        for file in files:
+            if any(file.endswith(ext) for ext in app.config['ALLOWED_EXTENSIONS']):
+                image_paths.append(encode(os.path.join(root, file)))
+    return render_template('evidence.html', paths=image_paths)
 
 
 @app.route('/evidence/<filename>')

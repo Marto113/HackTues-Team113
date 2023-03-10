@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<title>Login Page</title>
+    <title>Login Page</title>
     <link rel="stylesheet" href="../static/css/login.css">
 </head>
-<body>
-	<div class="background-image">
-		<div class="login-container">
-			<h1>Login</h1>
-			<form method="POST" action="{{ url_for('login') }}">
-				{{ form.csrf_token }}
-				<label for="username">Username</label>
-				<input type="text" id="username" name="username" required>
 
-				<label for="password">Password</label>
-				<input type="password" id="password" name="password" required>
+<body>
+    <div class="background-image">
+        <div class="login-container">
+            <h1>Login</h1>
+            <form method="POST" action="{{ url_for('login') }}">
+                {{ form.csrf_token }}
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
 
                 <label class="show-password">
                     <input type="checkbox" onclick="togglePassword()"> Show password
                 </label>
-    
+
                 <button type="submit">Login</button>
             </form>
         </div>
-    
+
         <script>
             function togglePassword() {
                 var passwordField = document.getElementById("password");
@@ -34,5 +36,6 @@
                 }
             }
         </script>
-    </body>
+</body>
+
 </html>
