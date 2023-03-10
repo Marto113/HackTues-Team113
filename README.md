@@ -44,11 +44,17 @@
 - Подобряване на хардуера
 
 ## Инсталация
-`git clone https://github.com/ToxicSDev/HackTues-Team113.git` <br />
-`pip install -r requirements.txt`
+```bash
+git clone https://github.com/ToxicSDev/HackTues-Team113.git
+pip install -r requirements.txt
+```
 
 ## Употреба
-След инсталиране на проекта run-вате 
+След инсталиране на проекта върху raspberry-то, въвеждате следните команди:
+```bash
+cd App/src
+python3 server.py
+```
 
 ## Отбор
  - Мартин Карабонев 
