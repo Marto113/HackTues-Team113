@@ -2,10 +2,11 @@ from face_recognition.api import face_locations, face_encodings, compare_faces
 import cv2
 from pathlib import Path
 from argparse import ArgumentParser
-from time import time_ns
+from time import time
 import numpy as np
 from math import *
 from threading import Thread, Lock, Event
+from alarm import telegram_alert_sync
 
 def locations_and_encodings(img, jitters):
     locs = face_locations(img)
@@ -85,12 +86,30 @@ class Function_Cache():
             self._quit.set()
         self._thread.join()
 
-def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tolerance, downscale):
+def notify(img, msg, evidence_path):
+    evidence_path.mkdir(parents=True, exist_ok=True)
+    filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
+    cv2.imwrite(filename, img)
+    telegram_alert_sync(msg, filename)
+
+def main_loop(
+        whitelist,
+        evidence_path,
+        min_edge_factor,
+        camera_id,
+        max_risk_time,
+        jitters,
+        tolerance,
+        downscale,
+        notification_cooldown,
+        debug_info,
+    ):
     cap = cv2.VideoCapture(camera_id)
 
     known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
 
-    prev_ns = time_ns()
+    prev_frame_ts = time()
+    prev_notification_ts = 0
     risk_time = 0
 
     alarm = False
@@ -106,11 +125,11 @@ def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tol
 
             bad_locs, good_locs = fc.call(frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance) or ([], [])
 
-            frame_is_risky = edge_factor < min_edge_factor or len(bad_locs) > 0
+            frame_is_risky = len(bad_locs) > 0 or edge_factor < min_edge_factor
 
-            if frame_is_risky: risk_time += (time_ns() - prev_ns) * 10**-9
-            else             : risk_time -= (time_ns() - prev_ns) * 10**-9
-            prev_ns = time_ns()
+            if frame_is_risky: risk_time += time() - prev_frame_ts
+            else             : risk_time -= time() - prev_frame_ts
+            prev_frame_ts = time()
 
             if risk_time > max_risk_time    : alarm = True
             if risk_time < max_risk_time / 2: alarm = False
@@ -121,15 +140,21 @@ def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tol
             draw_locs(frame, good_locs, (0, 255, 0), 2)
             draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
 
-            print(f'{np.shape(frame)=}')
-            print(f'{frame_is_risky=}')
-            print(f'{len(bad_locs)=}')
-            print(f'{len(good_locs)=}')
-            print(f'{edge_factor=}')
-            print(f'{risk_time=}')
+            if debug_info:
+                print(f'{np.shape(frame)=}')
+                print(f'{frame_is_risky=}')
+                print(f'{len(bad_locs)=}')
+                print(f'{len(good_locs)=}')
+                print(f'{edge_factor=}')
+                print(f'{risk_time=}')
+                print(f'{alarm=}')
 
-            if alarm: print('XXX')
-            else    : print('---')
+            if alarm and time() - prev_notification_ts > notification_cooldown:
+                msgs = []
+                if len(bad_locs) > 0:             msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
+                if edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
+                notify(frame, ' '.join(msgs), evidence_path)
+                prev_notification_ts = time()
 
             cv2.imshow('frame', frame)
 
@@ -143,12 +168,15 @@ def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tol
 if __name__ == '__main__':
     parser = ArgumentParser(description='Detect and match faces to whitelist')
     parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('whitelist/'))
+    parser.add_argument('--evidence', type=Path, help='Directory where to save the evidence', default=Path('evidence/'))
     parser.add_argument('--jitters', type=int, help='Number of jitters for face', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
     parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1.0)
-    parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=2000)
+    parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
     parser.add_argument('--downscale', type=int, help='Downscaling of camera input', default=1)
+    parser.add_argument('--notification-cooldown', type=int, help='Minimum seconds between notifications', default=60)
+    parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
 
     args = parser.parse_args()
 
@@ -158,11 +186,14 @@ if __name__ == '__main__':
         whitelist = []
 
     main_loop(
-        whitelist,
+        whitelist=whitelist,
+        evidence_path=args.evidence,
         max_risk_time=args.max_risk_time,
         jitters=args.jitters,
         tolerance=args.tolerance,
         camera_id=args.camera_id,
         min_edge_factor=args.min_edge_factor,
         downscale=args.downscale,
+        notification_cooldown=args.notification_cooldown,
+        debug_info=args.debug_info,
     )
