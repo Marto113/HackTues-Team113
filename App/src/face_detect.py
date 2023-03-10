@@ -88,7 +88,7 @@ class Function_Cache():
                     self._result = result
                     self._score = 0
             except Exception as e:
-                print(e)
+                pass
 
             if self._quit.is_set():
                 break
@@ -117,8 +117,24 @@ def notify(img, msg, evidence_path):
     cv2.imwrite(filename, img)
     telegram_alert_sync(msg, filename)
 
+def try_iterdir(path):
+    try:
+        return [str(it) for it in sorted(path.iterdir())]
+    except:
+        return []
+
+def rescan_whitelist(whitelist_path, filenames, known_encs, jitters):
+    cur_filenames = try_iterdir(whitelist_path)
+
+    if filenames == cur_filenames:
+        return filenames, known_encs
+
+    print('Whitelist change detected. Rescanning...')
+    cur_known_encs = [enc for name in cur_filenames for loc, enc in locations_and_encodings(cv2.imread(name), jitters)]
+    return cur_filenames, cur_known_encs
+
 def main_loop(
-        whitelist,
+        whitelist_path,
         evidence_path,
         min_edge_factor,
         camera_id,
@@ -131,16 +147,19 @@ def main_loop(
     ):
     cap = cv2.VideoCapture(camera_id)
 
-    known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
-
     prev_frame_ts = time()
     prev_notification_ts = 0
     risk_time = 0
 
     alarm = False
 
+    filenames = []
+    known_encs = []
+
     with Function_Cache(categorize_face_locations) as fc:
         while True:
+            filenames, known_encs = rescan_whitelist(whitelist_path, filenames, known_encs, jitters)
+
             ret, frame = cap.read()
 
             if not ret:
@@ -160,6 +179,7 @@ def main_loop(
 
             if frame_is_risky: risk_time += time() - prev_frame_ts
             else             : risk_time -= time() - prev_frame_ts
+            prev_frame_ts = time()
 
             if risk_time > max_risk_time    : alarm = True
             if risk_time < max_risk_time / 2: alarm = False
@@ -184,6 +204,7 @@ def main_loop(
                 msgs = []
                 if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
                 if locs_edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
+                if len(msgs) == 0:                     msgs.append('Unknown risk.')
 
                 draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
                 draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
@@ -203,12 +224,12 @@ def main_loop(
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Detect and match faces to whitelist')
-    parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('whitelist/'))
-    parser.add_argument('--evidence', type=Path, help='Directory where to save the evidence', default=Path('evidence/'))
+    parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('../whitelist/'))
+    parser.add_argument('--evidence', type=Path, help='Directory where to save the evidence', default=Path('../evidence/'))
     parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
-    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=10)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=3)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
     parser.add_argument('--notification-cooldown', type=float, help='Minimum seconds between notifications', default=10)
@@ -216,13 +237,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    try:
-        whitelist = [cv2.imread(str(it)) for it in Path(args.whitelist).iterdir()]
-    except:
-        whitelist = []
-
     main_loop(
-        whitelist=whitelist,
+        whitelist_path=args.whitelist,
         evidence_path=args.evidence,
         max_risk_time=args.max_risk_time,
         jitters=args.jitters,

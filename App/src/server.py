@@ -146,4 +146,4 @@ def evidence_delete_file(filename):
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=8080, use_reloader=False)
+    app.run(debug=False, host="0.0.0.0", port=8080, use_reloader=False)
