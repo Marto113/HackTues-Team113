@@ -2,6 +2,11 @@
 ![hacktues](https://sofiatech.bg/wp-content/uploads/2023/02/329756264_917819226022712_6886668015646983742_n.jpg)
 Нашият проект цели да предостави лесна за ползване и настройване система за сигурност.
 <br/>
+
+## Съдържание:
++ Тема
++ Функционалност
++
  
 ## Тема:
 ![theme](https://cdn.discordapp.com/attachments/1072413158771277824/1083097753032347748/home.png)
@@ -14,9 +19,12 @@
 
 ## Архитектура
 
+
 ##  Бъдещо Развитие
 
 ## Инсталация
+`git clone https://github.com/ToxicSDev/HackTues-Team113.git` <br />
+`pip install -r requirements.txt`
 
 ### Отбор
  - Мартин Карабонев 
