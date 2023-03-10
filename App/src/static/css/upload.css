@@ -101,3 +101,9 @@ body{
     opacity: 1;
     stroke-dashoffset: 0;
 }
+
+.error{
+    display: none;
+    color: red;
+    margin: 0 auto;
+}

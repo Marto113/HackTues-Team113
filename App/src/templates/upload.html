@@ -14,6 +14,7 @@
             {{ form.csrf_token }}
             {{ form.image.label }}
             {{ form.image(class_='upload_field') }}<br>
+            <div class="error">Please input an image.</div>
             <button type="button" class="upload">Upload</button>
         </form>
     </div>
@@ -31,6 +32,7 @@
     <script>
         $("button").click(function(){
             if ($('.upload_field').val() != ''){
+                $('.error').hide();
                 $(".trigger").toggleClass("drawn")
                 setTimeout(() => {
                     $(".trigger").toggleClass("drawn");
@@ -38,6 +40,8 @@
                 setTimeout(() => {
                     $("#imageform").submit();
                     }, 2000);
+                }else{
+                    $('.error').show();
                 }
         });
     </script>

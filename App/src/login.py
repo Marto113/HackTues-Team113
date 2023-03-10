@@ -6,10 +6,10 @@ from flask_login import LoginManager, current_user, login_user, login_required, 
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
-from dotenv import dotenv_values
+#from dotenv import dotenv_values
 
 app = Flask(__name__, static_url_path="/static")
-config = dotenv_values("../.env")
+#config = dotenv_values("../.env")
 app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
