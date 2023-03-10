@@ -36,13 +36,10 @@ def locations_and_encodings(img, jitters):
     encs = face_encodings(img, known_face_locations=locs, num_jitters=jitters, model='large')
     return zip(locs, encs)
 
-def detect_edges(img):
+def calculate_edge_factor(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     edges = cv2.Canny(blur, 50, 150)
-    return edges
-
-def calculate_edge_factor(edges):
     return np.sum(edges) / sqrt(edges.shape[0]*edges.shape[1])
 
 def draw_locs(img, locs, color, width):
@@ -65,7 +62,7 @@ def categorize_face_locations(img, known_encs, jitters, tolerance):
         else:
             bad_locs.append(loc)
 
-    return bad_locs, good_locs
+    return bad_locs, good_locs, calculate_edge_factor(img), img
 
 class Function_Cache():
     def __init__(self, function):
@@ -115,10 +112,10 @@ class Function_Cache():
 
 def notify(img, msg, evidence_path):
     print('Senfing notification', msg)
-    # evidence_path.mkdir(parents=True, exist_ok=True)
-    # filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
-    # cv2.imwrite(filename, img)
-    # telegram_alert_sync(msg, filename)
+    evidence_path.mkdir(parents=True, exist_ok=True)
+    filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
+    cv2.imwrite(filename, img)
+    telegram_alert_sync(msg, filename)
 
 def main_loop(
         whitelist,
@@ -152,12 +149,14 @@ def main_loop(
 
             frame = cv2.resize(frame, (floor(frame.shape[1]/downscale), floor(frame.shape[0]/downscale)))
 
-            edges = detect_edges(frame)
-            edge_factor = calculate_edge_factor(edges)
+            result = fc.call(calculate_edge_factor(frame), frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance)
+            if result is None:
+                prev_frame_ts = time()
+                continue
 
-            bad_locs, good_locs = fc.call(edge_factor, frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance) or ([], [])
+            bad_locs, good_locs, locs_edge_factor, locs_frame = result
 
-            frame_is_risky = len(bad_locs) > 0 or edge_factor < min_edge_factor
+            frame_is_risky = len(bad_locs) > 0 or locs_edge_factor < min_edge_factor
 
             if frame_is_risky: risk_time += time() - prev_frame_ts
             else             : risk_time -= time() - prev_frame_ts
@@ -176,15 +175,19 @@ def main_loop(
                 print(f'{frame_is_risky=}')
                 print(f'{len(bad_locs)=}')
                 print(f'{len(good_locs)=}')
-                print(f'{edge_factor=}')
                 print(f'{risk_time=}')
                 print(f'{alarm=}')
 
             if alarm and time() - prev_notification_ts > notification_cooldown:
                 msgs = []
-                if len(bad_locs) > 0:             msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
-                if edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
-                notify(frame, ' '.join(msgs), evidence_path)
+                if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
+                if locs_edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
+
+                draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
+                draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
+
+                notify(locs_frame, ' '.join(msgs), evidence_path)
+
                 prev_notification_ts = time()
 
             cv2.imshow('frame', frame)
@@ -203,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
-    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1.0)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=10.0)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
     parser.add_argument('--notification-cooldown', type=int, help='Minimum seconds between notifications', default=60)
