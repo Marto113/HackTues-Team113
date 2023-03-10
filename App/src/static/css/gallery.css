@@ -19,8 +19,8 @@ body {
 #close {
     color: white;
     position: fixed;
-    top: 102%;
-    left: 50%;
+    top: 50%;
+    left: 100%;
     transform: translate(-102%, -50%);
 }
 
