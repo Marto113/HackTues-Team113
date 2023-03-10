@@ -43,14 +43,16 @@ def calculate_edge_factor(img):
     return np.sum(edges) / sqrt(edges.shape[0]*edges.shape[1])
 
 def draw_locs(img, locs, color, width):
+    ret = img.copy()
     for it in locs:
         cv2.rectangle(
-            img,
+            ret,
             (it[3], it[0]),
             (it[1], it[2]),
             color,
             2,
         )
+    return ret
 
 def categorize_face_locations(img, known_encs, jitters, tolerance):
     bad_locs  = []
@@ -111,7 +113,7 @@ class Function_Cache():
             self._thread.join()
 
 def notify(img, msg, evidence_path):
-    print('Senfing notification', msg)
+    print('Sending notification:', msg)
     evidence_path.mkdir(parents=True, exist_ok=True)
     filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
     cv2.imwrite(filename, img)
@@ -131,6 +133,7 @@ def rescan_whitelist(whitelist_path, filenames, known_encs, jitters):
 
     print('Whitelist change detected. Rescanning...')
     cur_known_encs = [enc for name in cur_filenames for loc, enc in locations_and_encodings(cv2.imread(name), jitters)]
+    print('Whitelist rescanned!')
     return cur_filenames, cur_known_encs
 
 def main_loop(
@@ -189,9 +192,6 @@ def main_loop(
             risk_time = min(risk_time, max_risk_time)
             risk_time = max(risk_time, 0)
 
-            draw_locs(frame, good_locs, (0, 255, 0), 2)
-            draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
-
             if debug_info:
                 print(f'{frame.shape=}')
                 print(f'{frame_is_risky=}')
@@ -204,15 +204,17 @@ def main_loop(
                 msgs = []
                 if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
                 if locs_edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
-                if len(msgs) == 0:                     msgs.append('Unknown risk.')
 
-                draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
-                draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
+                if len(msgs) != 0:
+                    locs_frame = draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
+                    locs_frame = draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
 
-                notify(locs_frame, ' '.join(msgs), evidence_path)
+                    notify(locs_frame, ' '.join(msgs), evidence_path)
 
-                prev_notification_ts = time()
+                    prev_notification_ts = time()
 
+            frame = draw_locs(frame, good_locs, (0, 255, 0), 2)
+            frame = draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
             cv2.imshow('frame', frame)
 
             if cv2.waitKey(1) == ord('c'):
