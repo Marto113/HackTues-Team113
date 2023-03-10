@@ -42,7 +42,7 @@ def draw_locs(img, locs, color, width):
             2,
         )
 
-def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tolerance):
+def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tolerance, downscale):
     cap = cv2.VideoCapture(camera_id)
 
     known_encs = [enc for img in whitelist for loc, enc in locations_and_encodings(img, jitters)]
@@ -54,6 +54,8 @@ def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tol
 
     while True:
         ret, frame = cap.read()
+
+        frame = cv2.resize(frame, (np.shape(frame)[1]//downscale, np.shape(frame)[0]//downscale))
 
         edges = detect_edges(frame)
         edge_factor = calculate_edge_factor(edges)
@@ -75,8 +77,14 @@ def main_loop(whitelist, min_edge_factor, camera_id, max_risk_time, jitters, tol
         draw_locs(frame, good_locs, (0, 255, 0), 2)
         draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
 
-        if alarm: print('🚨')
-        else    : print('😀')
+        print(f'{np.shape(frame)=}')
+        print(f'{len(bad_locs)=}')
+        print(f'{len(good_locs)=}')
+        print(f'{edge_factor=}')
+        print(f'{risk_time=}')
+
+        if alarm: print('XXX')
+        else    : print('---')
 
         cv2.imshow('frame', frame)
 
@@ -95,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
     parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1.0)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=3000)
+    parser.add_argument('--downscale', type=int, help='Downscaling of camera input', default=1)
 
     args = parser.parse_args()
 
@@ -109,5 +118,6 @@ if __name__ == '__main__':
         jitters=args.jitters,
         tolerance=args.tolerance,
         camera_id=args.camera_id,
-        min_edge_factor=args.min_edge_factor
+        min_edge_factor=args.min_edge_factor,
+        downscale=args.downscale,
     )
