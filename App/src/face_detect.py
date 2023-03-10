@@ -192,14 +192,6 @@ def main_loop(
             risk_time = min(risk_time, max_risk_time)
             risk_time = max(risk_time, 0)
 
-            if debug_info:
-                print(f'{frame.shape=}')
-                print(f'{frame_is_risky=}')
-                print(f'{len(bad_locs)=}')
-                print(f'{len(good_locs)=}')
-                print(f'{risk_time=}')
-                print(f'{alarm=}')
-
             if alarm and time() - prev_notification_ts > notification_cooldown:
                 msgs = []
                 if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
@@ -213,12 +205,21 @@ def main_loop(
 
                     prev_notification_ts = time()
 
-            frame = draw_locs(frame, good_locs, (0, 255, 0), 2)
-            frame = draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
-            cv2.imshow('frame', frame)
+            if debug_info:
+                print(f'{frame.shape=}')
+                print(f'{frame_is_risky=}')
+                print(f'{len(bad_locs)=}')
+                print(f'{calculate_edge_factor(frame)=}')
+                print(f'{len(good_locs)=}')
+                print(f'{risk_time=}')
+                print(f'{alarm=}')
 
-            if cv2.waitKey(1) == ord('c'):
-                break
+                frame = draw_locs(frame, good_locs, (0, 255, 0), 2)
+                frame = draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
+
+                cv2.imshow('frame', frame)
+                if cv2.waitKey(1) == ord('c'):
+                    break
 
     cap.release()
     cv2.destroyAllWindows()
@@ -231,8 +232,8 @@ if __name__ == '__main__':
     parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
-    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=3)
-    parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=2)
+    parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1500)
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
     parser.add_argument('--notification-cooldown', type=float, help='Minimum seconds between notifications', default=10)
     parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
