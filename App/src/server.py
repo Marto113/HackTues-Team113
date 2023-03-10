@@ -12,6 +12,7 @@ app = Flask(__name__, static_url_path="/static")
 config = dotenv_values("../.env")
 app.config['SECRET_KEY'] = config['secret_key']
 app.config['UPLOAD_FOLDER'] = '../whitelist'
+app.config['EVIDENCE_FOLDER'] = '../evidence'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 login_manager = LoginManager(app)
 
@@ -37,7 +38,9 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
-        if username == 'root' and password == 'root':
+
+        config = dotenv_values("../.env")
+        if username == config['username'] and password == config['password']:
             user = User(username)
             login_user(user)
             return redirect(url_for('home'))
@@ -71,10 +74,49 @@ def home():
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return render_template('server.html', form=form)
 
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                           'favicon.ico',mimetype='image/vnd.microsoft.icon')
+
+@app.route('/whitelist')
+@login_required
+def whitelist():
+    file_list = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template('whitelist.html', files=file_list)
+
+
+@app.route('/whitelist/<filename>')
+@login_required
+def whitelist_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.route('/whitelist/delete/<filename>', methods=['GET', 'POST'])
+@login_required
+def whitelist_delete_file(filename):
+    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return redirect(url_for('home'))
+
+@app.route('/evidence')
+@login_required
+def evidence():
+    file_list = os.listdir(app.config['EVIDENCE_FOLDER'])
+    return render_template('whitelist.html', files=file_list)
+
+
+@app.route('/evidence/<filename>')
+@login_required
+def evidence_file(filename):
+    return send_from_directory(app.config['EVIDENCE_FOLDER'], filename)
+
+
+@app.route('/evidence/delete/<filename>', methods=['GET', 'POST'])
+@login_required
+def evidence_delete_file(filename):
+    os.remove(os.path.join(app.config['EVIDENCE_FOLDER'], filename))
+    return redirect(url_for('home'))
 
 
 if __name__ == "__main__":
