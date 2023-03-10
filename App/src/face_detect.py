@@ -1,4 +1,4 @@
-from face_recognition.api import face_locations, face_encodings, compare_faces
+from face_recognition.api import face_encodings, compare_faces
 import cv2
 from pathlib import Path
 from argparse import ArgumentParser
@@ -7,6 +7,29 @@ import numpy as np
 from math import *
 from threading import Thread, Lock, Event
 from alarm import telegram_alert_sync
+
+net = cv2.dnn.readNetFromCaffe('deploy.prototxt.txt', 'res10_300x300_ssd_iter_140000.caffemodel')
+
+def face_locations(img):
+    (h, w) = img.shape[:2]
+    blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+    net.setInput(blob)
+    detections = net.forward()
+
+    locs = []
+
+    for i in range(0, detections.shape[2]):
+        confidence = detections[0, 0, i, 2]
+
+        if confidence > .75:
+            locs.append((
+                floor(detections[0, 0, i, 4] * h),
+                floor(detections[0, 0, i, 5] * w),
+                floor(detections[0, 0, i, 6] * h),
+                floor(detections[0, 0, i, 3] * w),
+            ))
+
+    return locs
 
 def locations_and_encodings(img, jitters):
     locs = face_locations(img)
@@ -20,7 +43,7 @@ def detect_edges(img):
     return edges
 
 def calculate_edge_factor(edges):
-    return np.sum(edges) / sqrt(np.shape(edges)[0]*np.shape(edges)[1])
+    return np.sum(edges) / sqrt(edges.shape[0]*edges.shape[1])
 
 def draw_locs(img, locs, color, width):
     for it in locs:
@@ -53,6 +76,7 @@ class Function_Cache():
         self._quit = Event()
         self._thread = Thread(target=self._loop_call)
         self._result = None
+        self._score = 0
 
     def _loop_call(self):
         while True:
@@ -65,16 +89,19 @@ class Function_Cache():
 
                 with self._lock:
                     self._result = result
+                    self._score = 0
             except Exception as e:
                 print(e)
 
             if self._quit.is_set():
                 break
 
-    def call(self, *args, **kwargs):
+    def call(self, score, *args, **kwargs):
         with self._lock:
-            self._args = args
-            self._kwargs = kwargs
+            if score > self._score:
+                self._score = score
+                self._args = args
+                self._kwargs = kwargs
             return self._result
 
     def __enter__(self):
@@ -82,15 +109,16 @@ class Function_Cache():
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        with self._lock:
-            self._quit.set()
-        self._thread.join()
+            with self._lock:
+                self._quit.set()
+            self._thread.join()
 
 def notify(img, msg, evidence_path):
-    evidence_path.mkdir(parents=True, exist_ok=True)
-    filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
-    cv2.imwrite(filename, img)
-    telegram_alert_sync(msg, filename)
+    print('Senfing notification', msg)
+    # evidence_path.mkdir(parents=True, exist_ok=True)
+    # filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
+    # cv2.imwrite(filename, img)
+    # telegram_alert_sync(msg, filename)
 
 def main_loop(
         whitelist,
@@ -118,18 +146,21 @@ def main_loop(
         while True:
             ret, frame = cap.read()
 
-            frame = cv2.resize(frame, (np.shape(frame)[1]//downscale, np.shape(frame)[0]//downscale))
+            if not ret:
+                print('Error getting frames from camera')
+                break
+
+            frame = cv2.resize(frame, (floor(frame.shape[1]/downscale), floor(frame.shape[0]/downscale)))
 
             edges = detect_edges(frame)
             edge_factor = calculate_edge_factor(edges)
 
-            bad_locs, good_locs = fc.call(frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance) or ([], [])
+            bad_locs, good_locs = fc.call(edge_factor, frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance) or ([], [])
 
             frame_is_risky = len(bad_locs) > 0 or edge_factor < min_edge_factor
 
             if frame_is_risky: risk_time += time() - prev_frame_ts
             else             : risk_time -= time() - prev_frame_ts
-            prev_frame_ts = time()
 
             if risk_time > max_risk_time    : alarm = True
             if risk_time < max_risk_time / 2: alarm = False
@@ -141,7 +172,7 @@ def main_loop(
             draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
 
             if debug_info:
-                print(f'{np.shape(frame)=}')
+                print(f'{frame.shape=}')
                 print(f'{frame_is_risky=}')
                 print(f'{len(bad_locs)=}')
                 print(f'{len(good_locs)=}')
@@ -169,12 +200,12 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Detect and match faces to whitelist')
     parser.add_argument('--whitelist', type=Path, help='Directory with whitelisted people. Default: whitelist', default=Path('whitelist/'))
     parser.add_argument('--evidence', type=Path, help='Directory where to save the evidence', default=Path('evidence/'))
-    parser.add_argument('--jitters', type=int, help='Number of jitters for face', default=1)
+    parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
     parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1.0)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
-    parser.add_argument('--downscale', type=int, help='Downscaling of camera input', default=1)
+    parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
     parser.add_argument('--notification-cooldown', type=int, help='Minimum seconds between notifications', default=60)
     parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
 
