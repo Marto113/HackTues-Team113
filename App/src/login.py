@@ -69,7 +69,6 @@ def home():
         image = form.image.data
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('success'))
     return render_template('upload.html', form=form)
 
 

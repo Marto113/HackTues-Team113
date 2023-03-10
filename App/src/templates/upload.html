@@ -3,94 +3,44 @@
 
 <head>
     <title>Upload an Image</title>
-    <style>
-        .background-image {
-			background-image: url('../static/images/background.png');
-			background-size: cover;
-			background-position: center;
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			z-index: -1;
-		}
-        /* Body styles */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-
-        /* Header styles */
-        h1 {
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        /* Form styles */
-        form {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 20px;
-        }
-
-        input[type="file"] {
-            border: none;
-            padding: 20px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
-            width: 91%;
-            margin-bottom: 20px;
-        }
-
-        input[type="submit"] {
-            display: block;
-            margin: 0 auto;
-            border: none;
-            background-color: rgb(114, 194, 221);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        input[type="submit"]:hover {
-            background-color: lightgrey;
-        }
-
-        .upload_field {
-            display: block;
-            margin: 0 auto;
-        }
-    
-    </style>
+    <link rel="stylesheet" href="../static/css/upload.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
 </head>
 
 <body>
     <div class="background-image">
         <h1>Upload to whitelist</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <form id="imageform" method="POST" enctype="multipart/form-data">
             {{ form.csrf_token }}
             {{ form.image.label }}
             {{ form.image(class_='upload_field') }}<br>
-            <input type="submit" value="Upload">
+            <button type="button" class="upload">Upload</button>
         </form>
     </div>
+
+    <div class="trigger"></div>
+    <svg version="1.1" id="tick" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+    viewBox="0 0 100 100" style="enable-background:new 0 0 37 37;" xml:space="preserve">
+        <path class="circ path" style="fill:none;stroke:#7FFF00;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;" d="
+            M30.5,6.5L30.5,6.5c6.6,6.6,6.6,17.4,0,24l0,0c-6.6,6.6-17.4,6.6-24,0l0,0c-6.6-6.6-6.6-17.4,0-24l0,0C13.1-0.2,23.9-0.2,30.5,6.5z"
+            />
+        <polyline class="tick path" style="fill:none;stroke:#7FFF00;stroke-width:3;stroke-linejoin:round;stroke-miterlimit:10;" points="
+            11.6,20 15.9,24.2 26.4,13.8 "/>
+        </svg>
+
+    <script>
+        $("button").click(function(){
+            if ($('.upload_field').val() != ''){
+                $(".trigger").toggleClass("drawn")
+                setTimeout(() => {
+                    $(".trigger").toggleClass("drawn");
+                    }, 750);
+                setTimeout(() => {
+                    $("#imageform").submit();
+                    }, 2000);
+                }
+        });
+    </script>
 </body>
 
 </html>

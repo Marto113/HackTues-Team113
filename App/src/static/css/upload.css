@@ -1,0 +1,103 @@
+.background-image {
+    background-image: url('../images/background.png');
+    background-size: cover;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+}
+/* Body styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+}
+
+/* Header styles */
+h1 {
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* Form styles */
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+input[type="file"] {
+    border: none;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    width: 91%;
+    margin-bottom: 20px;
+}
+
+button.upload {
+    display: block;
+    margin: 0 auto;
+    border: none;
+    background-color: rgb(114, 194, 221);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: lightgrey;
+}
+
+.upload_field {
+    display: block;
+    margin: 0 auto;
+}
+
+body{
+    width: 250%;
+    max-width: 250px;
+    margin-top: 350px;
+    margin-left: 915px;
+}
+.circ{
+    opacity: 0;
+    stroke-dasharray: 130;
+    stroke-dashoffset: 130;
+    -webkit-transition: all 1s;
+    -moz-transition: all 1s;
+    -ms-transition: all 1s;
+    -o-transition: all 1s;
+    transition: all 1s;
+}
+.tick{
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    -webkit-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -moz-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -ms-transition: stroke-dashoffset 1s 0.5s ease-out;
+    -o-transition: stroke-dashoffset 1s 0.5s ease-out;
+    transition: stroke-dashoffset 1s 0.5s ease-out;
+}
+.drawn + svg .path{
+    opacity: 1;
+    stroke-dashoffset: 0;
+}
