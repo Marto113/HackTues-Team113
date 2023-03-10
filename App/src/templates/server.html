@@ -19,7 +19,7 @@
             <button onclick="location.href='/logout'" type="button">Log Out</a>
         </form>
     </div>
-    
+
 
     <!--<svg version="1.1" id="tick" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
     viewBox="0 0 100 100" style="enable-background:new 0 0 37 37;" xml:space="preserve">
@@ -31,16 +31,16 @@
     </svg>
     -->
     <script>
-
-        $("button").click(function(){
-            if ($('.upload_field').val() != ''){
+        $("button").click(function () {
+            if ($('.upload_field').val() != '') {
                 $('.error').hide();
-                $(".trigger").toggleClass("upload")
+                $("#imageform").submit();
                 alert("Function executed successfully!");
-                }else{
-                    $('.error').show();
-                }
+            } else {
+                $('.error').show();
+            }
         });
     </script>
 </body>
+
 </html>
