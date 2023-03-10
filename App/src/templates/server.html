@@ -14,20 +14,18 @@
             {{ form.csrf_token }}
             {{ form.image.label }}
             {{ form.image(class_='upload_field') }}<br>
-            <div class="error">Please input an image.</div>
             <button type="button" class="upload">Upload</button>
-            <button onclick="location.href='/logout'" type="button">Log Out</a>
+            <button onclick="location.href='/whitelist'" type="button" class="whitelist">Whitelist</a>
+            <button onclick="location.href='/evidence'" type="button" class="evidence">Evidence</a>
+            <button onclick="location.href='/logout'" type="button" class="logout">Log Out</a>
         </form>
     </div>
 
     <script>
         $("button").click(function () {
             if ($('.upload_field').val() != '') {
-                $('.error').hide();
                 $("#imageform").submit();
                 alert("Function executed successfully!");
-            } else {
-                $('.error').show();
             }
         });
     </script>

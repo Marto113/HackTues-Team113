@@ -57,6 +57,7 @@ button.upload {
     float: middle;
     background-color: rgb(128, 229, 107);
     color: white;
+    margin-right: 72px;
     padding: 10px;
     border-radius: 5px;
     text-decoration: none;
@@ -64,10 +65,34 @@ button.upload {
     cursor: pointer;
 }
 
-button {
+button.logout {
     float: middle;
     background-color: #ff6961;
     color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
+
+button.evidence {
+    float: middle;
+    background-color: rgb(114, 194, 221);
+    color: white;
+    margin-right: 72px;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+button.whitelist {
+    float: middle;
+    background-color: rgb(114, 194, 221);
+    color: white;
+    margin-right: 72px;
     padding: 10px;
     border-radius: 5px;
     text-decoration: none;
