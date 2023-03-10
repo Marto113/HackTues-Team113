@@ -53,7 +53,6 @@ input[type="file"] {
 }
 
 button.upload {
-    
     float: middle;
     background-color: rgb(128, 229, 107);
     color: white;
@@ -64,14 +63,15 @@ button.upload {
     cursor: pointer;
 }
 
-.logout {
-    float: right;
+button {
+    float: middle;
     background-color: #ff6961;
     color: white;
     padding: 10px;
     border-radius: 5px;
     text-decoration: none;
     cursor: pointer;
+    border: none;
 }
 
 input[type="submit"]:hover {
