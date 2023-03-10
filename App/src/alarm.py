@@ -5,7 +5,6 @@ import time
 
 async def telegram_alert(message, image):
     config = dotenv_values("../.env")
-    print(config)
     token = config['telegram_token']
     chat_id = config['telegram_chat_id']
 
