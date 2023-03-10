@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email
@@ -6,9 +6,10 @@ from flask_login import LoginManager, current_user, login_user, login_required, 
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
-
+from dotenv import dotenv_values
 
 app = Flask(__name__, static_url_path="/static")
+config = dotenv_values("../.env")
 app.config['SECRET_KEY'] = '8f42a73054b1749f8f58848be5e6502c'
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
@@ -75,6 +76,11 @@ def home():
 @app.route('/success')
 def success():
     return 'Image successfully uploaded!'
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                          'favicon.ico',mimetype='image/vnd.microsoft.icon')
 
 
 if __name__ == "__main__":
