@@ -1,0 +1,5 @@
+Flask==2.2.3
+Flask_WTF==1.1.1
+telegram==0.0.1
+Werkzeug==2.2.3
+WTForms==3.0.1
