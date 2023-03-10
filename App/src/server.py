@@ -1,17 +1,23 @@
 from flask import Flask, render_template, redirect, url_for, request, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, Email
-from flask_login import LoginManager, current_user, login_user, login_required, UserMixin, logout_user
+from wtforms.validators import DataRequired
+from flask_login import LoginManager, login_user, login_required, UserMixin, logout_user
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
 import os
 from dotenv import dotenv_values
-import binascii
 
 app = Flask(__name__, static_url_path="/static")
 config = dotenv_values("../.env")
 app.config['SECRET_KEY'] = config['secret_key']
+
+if not os.path.exists("../whitelist"):
+    os.makedirs("../whitelist")
+
+if not os.path.exists("../evidence"):
+    os.makedirs("../evidence")
+
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['EVIDENCE_FOLDER'] = '../evidence'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png'}

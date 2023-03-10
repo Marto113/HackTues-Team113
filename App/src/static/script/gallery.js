@@ -29,8 +29,8 @@ function do_close() {
     document.getElementById('close').hidden = true;
 }
 
-function delete_image() {
+function delete_image(type) {
     var img_src = document.getElementById("top").getAttribute("src");
     var filename = img_src.split('/').pop();
-    window.location.href = '/whitelist/delete/' + filename;
+    window.location.href = type + "/delete/" + filename;
 }
