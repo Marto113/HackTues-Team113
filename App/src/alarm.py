@@ -19,32 +19,13 @@ def telegram_alert_sync(*args, **kwargs):
 
 try:
     import RPi.GPIO as GPIO
-    def buzzer_alert():
-        BUZZER_PIN = 17
-        DURATION_1 = 0.2
-        DURATION_2 = 0.2
+    BUZZER_PIN = 17
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(BUZZER_PIN, GPIO.OUT)
 
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        GPIO.setup(BUZZER_PIN, GPIO.OUT)
-
-        start_time = time.time()
-        while (time.time() - start_time) <= 300:  # run for 5 minutes
-            for duty_cycle in range(0, 101, 5):
-                GPIO.output(BUZZER_PIN, True)
-                time.sleep(DURATION_1 / 100.0)
-                GPIO.output(BUZZER_PIN, False)
-                time.sleep((DURATION_1 * 4 / 5) / 100.0)
-
-            GPIO.output(BUZZER_PIN, True)
-            time.sleep(DURATION_2)
-            GPIO.output(BUZZER_PIN, False)
-            time.sleep(DURATION_2)
-
-        GPIO.cleanup()
-
-    def alert(message, image):
-        asyncio.run(telegram_alert(message, image))
-        buzzer_alert()
+    def set_buzzer(state):
+        GPIO.output(BUZZER_PIN, state)
 except:
-    pass
+    def set_buzzer(state):
+        print('Buzzer', state)

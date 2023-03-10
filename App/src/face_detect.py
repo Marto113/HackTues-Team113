@@ -6,7 +6,7 @@ from time import time
 import numpy as np
 from math import *
 from threading import Thread, Lock, Event
-from alarm import telegram_alert_sync
+from alarm import telegram_alert_sync, set_buzzer
 
 net = cv2.dnn.readNetFromCaffe('deploy.prototxt.txt', 'res10_300x300_ssd_iter_140000.caffemodel')
 
@@ -164,6 +164,8 @@ def main_loop(
             if risk_time > max_risk_time    : alarm = True
             if risk_time < max_risk_time / 2: alarm = False
 
+            set_buzzer(alarm)
+
             risk_time = min(risk_time, max_risk_time)
             risk_time = max(risk_time, 0)
 
@@ -206,10 +208,10 @@ if __name__ == '__main__':
     parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
     parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
-    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=10.0)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=10)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1000)
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
-    parser.add_argument('--notification-cooldown', type=int, help='Minimum seconds between notifications', default=60)
+    parser.add_argument('--notification-cooldown', type=float, help='Minimum seconds between notifications', default=10)
     parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
 
     args = parser.parse_args()
