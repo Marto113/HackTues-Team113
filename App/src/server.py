@@ -11,6 +11,7 @@ import binascii
 
 app = Flask(__name__, static_url_path="/static")
 config = dotenv_values("../.env")
+app.config['SECRET_KEY'] = config['secret_key']
 app.config['UPLOAD_FOLDER'] = '../whitelist'
 app.config['EVIDENCE_FOLDER'] = '../evidence'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png'}
