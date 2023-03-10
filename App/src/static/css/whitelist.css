@@ -21,18 +21,14 @@ h1 {
     height: 100%;
     z-index: 1;
 }
-  
-.overlay img {
-    max-height: 90%;
-    max-width: 90%;
-}
+
   
 #close {
     position: absolute;
     top: 0;
     right: 0;
     padding: 10px;
-    color: #fff;
+    color: black;
     font-size: 16px;
     cursor: pointer;
 }
