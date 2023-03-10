@@ -4,6 +4,17 @@
 <head>
     <title>Upload an Image</title>
     <style>
+        .background-image {
+			background-image: url('../static/images/background.png');
+			background-size: cover;
+			background-position: center;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: -1;
+		}
         /* Body styles */
         body {
             font-family: Arial, sans-serif;
@@ -40,36 +51,46 @@
 
         input[type="file"] {
             border: none;
-            padding: 10px;
+            padding: 20px;
             background-color: #f5f5f5;
             border-radius: 5px;
-            width: 100%;
+            width: 91%;
             margin-bottom: 20px;
         }
 
         input[type="submit"] {
+            display: block;
+            margin: 0 auto;
             border: none;
-            background-color: #43a2c7;
+            background-color: rgb(114, 194, 221);
             color: #fff;
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
 
         input[type="submit"]:hover {
-            background-color: #43a2c7;
+            background-color: lightgrey;
         }
+
+        .upload_field {
+            display: block;
+            margin: 0 auto;
+        }
+    
     </style>
 </head>
 
 <body>
-    <h1>Upload an Image</h1>
-    <form method="POST" enctype="multipart/form-data">
-        {{ form.csrf_token }}
-        {{ form.image.label }} {{ form.image }}<br><br>
-        <input type="submit" value="Upload">
-    </form>
+    <div class="background-image">
+        <h1>Upload to whitelist</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.csrf_token }}
+            {{ form.image.label }}
+            {{ form.image(class_='upload_field') }}<br>
+            <input type="submit" value="Upload">
+        </form>
+    </div>
 </body>
 
 </html>

@@ -11,7 +11,7 @@ app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'gif'}
 
 
 class UploadForm(FlaskForm):
-    image = FileField('Upload Image', validators=[FileRequired(), FileAllowed(
+    image = FileField('', validators=[FileRequired(), FileAllowed(
         app.config['ALLOWED_EXTENSIONS'], 'Images only!')])
 
 
