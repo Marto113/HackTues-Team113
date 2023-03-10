@@ -17,15 +17,6 @@ app.config['EVIDENCE_FOLDER'] = '../evidence'
 app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png'}
 login_manager = LoginManager(app)
 
-
-def encode(x):
-    return binascii.hexlify(x.encode('utf-8')).decode()
-
-
-def decode(x):
-    return binascii.unhexlify(x.encode('utf-8')).decode()
-
-
 class User(UserMixin):
     def __init__(self, id):
         self.id = id
@@ -94,7 +85,7 @@ def favicon():
 @app.route('/cdn/<path:filepath>')
 @login_required
 def download_file(filepath):
-    dir, filename = os.path.split(decode(filepath))
+    dir, filename = os.path.split(filepath)
     return send_from_directory(dir, filename, as_attachment=False)
 
 
@@ -106,7 +97,7 @@ def whitelist():
     for root, dirs, files in os.walk(img_dir):
         for file in files:
             if any(file.endswith(ext) for ext in app.config['ALLOWED_EXTENSIONS']):
-                image_paths.append(encode(os.path.join(root, file)))
+                image_paths.append(os.path.join(root, file))
     return render_template('whitelist.html', paths=image_paths)
 
 
@@ -131,7 +122,7 @@ def evidence():
     for root, dirs, files in os.walk(img_dir):
         for file in files:
             if any(file.endswith(ext) for ext in app.config['ALLOWED_EXTENSIONS']):
-                image_paths.append(encode(os.path.join(root, file)))
+                image_paths.append(os.path.join(root, file))
     return render_template('evidence.html', paths=image_paths)
 
 
