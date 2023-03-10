@@ -17,7 +17,7 @@ class User(UserMixin):
         return User(user_id)
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
@@ -25,11 +25,10 @@ class LoginForm(FlaskForm):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        email = form.email.data
+        username = form.username.data
         password = form.password.data
-
-        if email == 'kamen2109@gmail.com' and password == 'ivan1234':
-            user = User(email)
+        if username == 'root' and password == 'root':
+            user = User(username)
             login_user(user)
             return redirect(url_for('home'))
 
