@@ -35,6 +35,8 @@
   
 ## Архитектура
 
+![architecture](https://i.imgur.com/326wufy.png)
+
 ## Технологии
 - Raspberry Pi
 - Python
