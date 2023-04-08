@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    background-color: rgb(114, 194, 221);
+    background-color: rgb(86,162,199);
 }
 
 * {
@@ -18,14 +18,25 @@ body {
 
 #close {
     color: white;
-    position: fixed;
-    top: 50%;
-    left: 100%;
+    position: absolute;
+    top: 92%;
+    left: 37%;
     transform: translate(-102%, -50%);
 }
 
+#delete-all {
+    position: relative;
+    background-color: #ff6961;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
+
 #delete-button {
-    float: right;
+    position: relative;
     background-color: #ff6961;
     color: white;
     padding: 10px;
@@ -36,7 +47,7 @@ body {
 }
 
 #close-button {
-    float: right;
+    position: relative;
     background-color: orange;
     color: white;
     padding: 10px;

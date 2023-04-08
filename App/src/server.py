@@ -37,6 +37,15 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+def delete_folder(path):
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
+        if os.path.isdir(file_path):
+            delete_folder(file_path)
+        else:
+            os.remove(file_path)
+            
+    os.rmdir(path)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -144,6 +153,20 @@ def evidence_delete_file(filename):
     os.remove(os.path.join(app.config['EVIDENCE_FOLDER'], filename))
     return redirect(url_for('home'))
 
+@app.route('/evidence/delete/all')
+@login_required
+def evidence_delete_all():
+    delete_folder(app.config['EVIDENCE_FOLDER'])
+    os.makedirs("../evidence")
+    return redirect(url_for('home'))
+
+@app.route('/whitelist/delete/all')
+@login_required
+def whitelist_delete_all():
+    delete_folder(app.config['UPLOAD_FOLDER'])
+    os.makedirs("../whitelist")
+    return redirect(url_for('home'))
+    
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=8080, use_reloader=False)

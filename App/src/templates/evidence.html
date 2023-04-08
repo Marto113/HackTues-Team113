@@ -10,6 +10,7 @@
 <body>
   <div style="text-align:center;">
     <h1>Evidence Gallery</h1>
+    <button id="delete-all" onclick="location.href='/evidence/delete/all'">Delete All</button>
   </div>
   <div class="overlay"><img src="" id="top" hidden=True>
     <span id="close" hidden=True onclick=do_close()>
@@ -19,7 +20,7 @@
   </div>
   <div class="cx">
     {% for path in paths %}
-    <img src='cdn/{{ path }}' height=200 width=200 onclick="clicked_img(this)">
+    <img src='cdn/{{ path }}' height=200 width=300 onclick="clicked_img(this)">
     {% endfor %}
   </div>
 </body>
