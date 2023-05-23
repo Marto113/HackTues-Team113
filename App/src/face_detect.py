@@ -2,19 +2,21 @@ from face_recognition.api import face_encodings, compare_faces
 import cv2
 from pathlib import Path
 from argparse import ArgumentParser
-from time import time
+from time import time, sleep
 import numpy as np
 from math import *
-from threading import Thread, Lock, Event
-from alarm import telegram_alert_sync, set_buzzer
+from threading import Thread, Lock, Event, get_ident as get_thread_ident
+from serial import Serial
 
-net = cv2.dnn.readNetFromCaffe('deploy.prototxt.txt', 'res10_300x300_ssd_iter_140000.caffemodel')
+nets = {}
 
 def face_locations(img):
+    net = nets.setdefault(get_thread_ident(), cv2.dnn.readNetFromCaffe('deploy.prototxt.txt', 'res10_300x300_ssd_iter_140000.caffemodel'))
+    
     (h, w) = img.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-    net.setInput(blob)
-    detections = net.forward()
+    nets[get_thread_ident()].setInput(blob)
+    detections = nets[get_thread_ident()].forward()
 
     locs = []
 
@@ -30,6 +32,12 @@ def face_locations(img):
             ))
 
     return locs
+
+def notify(img, msg, evidence_path):
+    print('Sending notification:', msg)
+    evidence_path.mkdir(parents=True, exist_ok=True)
+    filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
+    cv2.imwrite(filename, img)
 
 def locations_and_encodings(img, jitters):
     locs = face_locations(img)
@@ -102,6 +110,11 @@ class Function_Cache():
                 self._args = args
                 self._kwargs = kwargs
             return self._result
+        
+    def invalidate(self):
+        with self._lock:
+            self._result = None
+            self._score = 0
 
     def __enter__(self):
         self._thread.start()
@@ -111,13 +124,6 @@ class Function_Cache():
             with self._lock:
                 self._quit.set()
             self._thread.join()
-
-def notify(img, msg, evidence_path):
-    print('Sending notification:', msg)
-    evidence_path.mkdir(parents=True, exist_ok=True)
-    filename = str(evidence_path/f'{floor(time())}-{msg}.jpg')
-    cv2.imwrite(filename, img)
-    telegram_alert_sync(msg, filename)
 
 def try_iterdir(path):
     try:
@@ -129,12 +135,17 @@ def rescan_whitelist(whitelist_path, filenames, known_encs, jitters):
     cur_filenames = try_iterdir(whitelist_path)
 
     if filenames == cur_filenames:
-        return filenames, known_encs
+        return filenames, known_encs, False
 
     print('Whitelist change detected. Rescanning...')
-    cur_known_encs = [enc for name in cur_filenames for loc, enc in locations_and_encodings(cv2.imread(name), jitters)]
+    cur_known_encs = []
+    for name in cur_filenames:
+        print(name)
+        img = cv2.imread(name)
+        for loc, enc in locations_and_encodings(img, jitters):
+            cur_known_encs.append(enc)
     print('Whitelist rescanned!')
-    return cur_filenames, cur_known_encs
+    return cur_filenames, cur_known_encs, True
 
 def main_loop(
         whitelist_path,
@@ -145,14 +156,17 @@ def main_loop(
         jitters,
         tolerance,
         downscale,
-        notification_cooldown,
+        action_cooldown,
         debug_info,
+        serial_port,
     ):
     cap = cv2.VideoCapture(camera_id)
 
     prev_frame_ts = time()
-    prev_notification_ts = 0
+    prev_action_ts = 0
     risk_time = 0
+
+    serial = Serial(serial_port, 9600)
 
     alarm = False
 
@@ -161,9 +175,13 @@ def main_loop(
 
     with Function_Cache(categorize_face_locations) as fc:
         while True:
-            filenames, known_encs = rescan_whitelist(whitelist_path, filenames, known_encs, jitters)
+            filenames, known_encs, changed = rescan_whitelist(whitelist_path, filenames, known_encs, jitters)
+            if changed:
+                prev_frame_ts = time()
 
             ret, frame = cap.read()
+
+            frame = np.rot90(frame, 2)
 
             if not ret:
                 print('Error getting frames from camera')
@@ -178,6 +196,8 @@ def main_loop(
 
             bad_locs, good_locs, locs_edge_factor, locs_frame = result
 
+            bad_centers = [ (it[1]+it[3]) / 2 / frame.shape[1] - 0.5 for it in bad_locs]
+
             frame_is_risky = len(bad_locs) > 0 or locs_edge_factor < min_edge_factor
 
             if frame_is_risky: risk_time += time() - prev_frame_ts
@@ -187,12 +207,10 @@ def main_loop(
             if risk_time > max_risk_time    : alarm = True
             if risk_time < max_risk_time / 2: alarm = False
 
-            set_buzzer(alarm)
-
             risk_time = min(risk_time, max_risk_time)
             risk_time = max(risk_time, 0)
 
-            if alarm and time() - prev_notification_ts > notification_cooldown:
+            if alarm and bad_centers and time() - prev_action_ts > action_cooldown:
                 msgs = []
                 if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
                 if locs_edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
@@ -201,19 +219,22 @@ def main_loop(
                     locs_frame = draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
                     locs_frame = draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
 
+                    prev_notification_ts = time()
                     notify(locs_frame, ' '.join(msgs), evidence_path)
 
-                    prev_notification_ts = time()
+                prev_action_ts = time()
+                closest_center = sorted(bad_centers, key=lambda x: abs(x))[0]
+                delta = round(-45 * closest_center + 45)
+                delta_bytes = delta.to_bytes(1, 'big', signed=True)
+                serial.write(
+                    'r'.encode('utf-8') +
+                    delta.to_bytes(1, 'big', signed=True) +
+                    't'.encode('utf-8')
+                )
+                fc.invalidate()
+
 
             if debug_info:
-                print(f'{frame.shape=}')
-                print(f'{frame_is_risky=}')
-                print(f'{len(bad_locs)=}')
-                print(f'{calculate_edge_factor(frame)=}')
-                print(f'{len(good_locs)=}')
-                print(f'{risk_time=}')
-                print(f'{alarm=}')
-
                 frame = draw_locs(frame, good_locs, (0, 255, 0), 2)
                 frame = draw_locs(frame, bad_locs, (0, 0, 255) if alarm else (0, 255, 255), 2)
 
@@ -231,12 +252,13 @@ if __name__ == '__main__':
     parser.add_argument('--evidence', type=Path, help='Directory where to save the evidence', default=Path('../evidence/'))
     parser.add_argument('--jitters', type=int, help='Number of jitters for face encoding', default=1)
     parser.add_argument('--tolerance', type=float, help='Tolerance for maching faces', default=0.6)
-    parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=0)
-    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=2)
+    parser.add_argument('--camera-id', type=int, help='Id of camera to use for video', default=1)
+    parser.add_argument('--max-risk-time', type=float, help='Seconds of an unsecure conditions before raising the alarm', default=1)
     parser.add_argument('--min-edge-factor', type=float, help='Treshold for declaring the camera obstructed', default=1500)
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
-    parser.add_argument('--notification-cooldown', type=float, help='Minimum seconds between notifications', default=10)
+    parser.add_argument('--action-cooldown', type=float, help='Minimum seconds between reactions', default=3)
     parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
+    parser.add_argument('--serial-port', type=str, help='The serial port', default='COM9')
 
     args = parser.parse_args()
 
@@ -249,6 +271,7 @@ if __name__ == '__main__':
         camera_id=args.camera_id,
         min_edge_factor=args.min_edge_factor,
         downscale=args.downscale,
-        notification_cooldown=args.notification_cooldown,
+        action_cooldown=args.action_cooldown,
         debug_info=args.debug_info,
+        serial_port=args.serial_port,
     )
