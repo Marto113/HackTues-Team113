@@ -12,7 +12,7 @@ nets = {}
 
 def face_locations(img):
     net = nets.setdefault(get_thread_ident(), cv2.dnn.readNetFromCaffe('deploy.prototxt.txt', 'res10_300x300_ssd_iter_140000.caffemodel'))
-    
+
     (h, w) = img.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
     nets[get_thread_ident()].setInput(blob)
@@ -110,7 +110,7 @@ class Function_Cache():
                 self._args = args
                 self._kwargs = kwargs
             return self._result
-        
+
     def invalidate(self):
         with self._lock:
             self._result = None
@@ -173,6 +173,8 @@ def main_loop(
     filenames = []
     known_encs = []
 
+    do_face_detect = False;
+
     with Function_Cache(categorize_face_locations) as fc:
         while True:
             filenames, known_encs, changed = rescan_whitelist(whitelist_path, filenames, known_encs, jitters)
@@ -189,14 +191,25 @@ def main_loop(
 
             frame = cv2.resize(frame, (floor(frame.shape[1]/downscale), floor(frame.shape[0]/downscale)))
 
-            result = fc.call(calculate_edge_factor(frame), frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance)
+            while serial.in_waiting:
+                cmd = serial.read().decode('utf-8')
+                if cmd == 'a':
+                    do_face_detect = True
+                if cmd == 'm':
+                    do_face_detect = False
+
+            if do_face_detect:
+                result = fc.call(calculate_edge_factor(frame), frame, known_encs=known_encs, jitters=jitters, tolerance=tolerance)
+            else:
+                result = [], [], calculate_edge_factor(frame), frame
+
             if result is None:
                 prev_frame_ts = time()
                 continue
 
             bad_locs, good_locs, locs_edge_factor, locs_frame = result
 
-            bad_centers = [ (it[1]+it[3]) / 2 / frame.shape[1] - 0.5 for it in bad_locs]
+            bad_centers = [(it[1]+it[3]) / 2 / frame.shape[1] - 0.5 for it in bad_locs]
 
             frame_is_risky = len(bad_locs) > 0 or locs_edge_factor < min_edge_factor
 
