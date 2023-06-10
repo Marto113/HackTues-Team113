@@ -271,7 +271,7 @@ if __name__ == '__main__':
     parser.add_argument('--downscale', type=float, help='Downscaling of camera input', default=1)
     parser.add_argument('--action-cooldown', type=float, help='Minimum seconds between reactions', default=3)
     parser.add_argument('--debug-info', action='store_true', help='Show debug info', default=False)
-    parser.add_argument('--serial-port', type=str, help='The serial port', default='COM9')
+    parser.add_argument('--serial-port', type=str, help='The serial port', default='COM6')
 
     args = parser.parse_args()
 
