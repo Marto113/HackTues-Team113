@@ -60,6 +60,7 @@ void setup()
 void loop(){
   digitalWrite(greenLed, HIGH);
   while(mode == false){
+    horizontal.attach(9);
     digitalWrite(greenLed, HIGH);
     x = analogRead(A0);
     y = analogRead(A1);
@@ -110,6 +111,7 @@ void loop(){
       mode = true;
         digitalWrite(greenLed, LOW);
         Serial.write("a");
+        Serial.flush();
         break;
     }
   }
@@ -133,6 +135,7 @@ void loop(){
       mode = false;
         digitalWrite(redLed, LOW);
         Serial.write("m");
+        Serial.flush();
         break;
     }
   }
