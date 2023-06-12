@@ -225,26 +225,27 @@ def main_loop(
 
             if alarm and bad_centers and time() - prev_action_ts > action_cooldown:
                 msgs = []
-                if len(bad_locs) > 0:                  msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
+                if bad_locs:                           msgs.append(f'{len(bad_locs)} unauthorized faces in view.')
                 if locs_edge_factor < min_edge_factor: msgs.append(f'Camera is obstructed.')
 
-                if len(msgs) != 0:
+                if msgs:
                     locs_frame = draw_locs(locs_frame, good_locs, (0, 255, 0), 2)
                     locs_frame = draw_locs(locs_frame, bad_locs, (0, 0, 255), 2)
 
                     prev_notification_ts = time()
                     notify(locs_frame, ' '.join(msgs), evidence_path)
 
-                prev_action_ts = time()
-                closest_center = sorted(bad_centers, key=lambda x: abs(x))[0]
-                delta = round(-45 * closest_center + 45)
-                delta_bytes = delta.to_bytes(1, 'big', signed=True)
-                serial.write(
-                    'r'.encode('utf-8') +
-                    delta.to_bytes(1, 'big', signed=True) +
-                    't'.encode('utf-8')
-                )
-                fc.invalidate()
+                if bad_centers:
+                    prev_action_ts = time()
+                    closest_center = sorted(bad_centers, key=lambda x: abs(x))[0]
+                    delta = round(-45 * closest_center + 45)
+                    delta_bytes = delta.to_bytes(1, 'big', signed=True)
+                    serial.write(
+                        'r'.encode('utf-8') +
+                        delta.to_bytes(1, 'big', signed=True) +
+                        't'.encode('utf-8')
+                    )
+                    fc.invalidate()
 
 
             if debug_info:
